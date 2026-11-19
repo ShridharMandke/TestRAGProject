@@ -2,27 +2,44 @@
 
 from src.dataLoader import Load_pdf_documents
 from src.dataChunkEmbedding import DataEmbeddingPipeline
+from src.querySearch import QuerySearch
+from src.VectorDBStoreEmbeddings import ChromaDBVectorStore
 
 
 if __name__ == "__main__":
 
-    pdf_directory = "G:\\Shridhar Projects\\Test PDFs"
-    pdf_documents = Load_pdf_documents(pdf_directory)
-    #print(pdf_documents)
+    vectorDBStore = ChromaDBVectorStore(collection_name="PDF_Data")
 
-    for doc in pdf_documents:
-        print("Metadata:", doc.metadata)
-        print("Text attributes:", doc.page_content[:200])
+    if vectorDBStore.collection.count() > 0:
+        print("PDF_Data already contains chunks; skipping ingestion.")
 
-    # Initialize the DataEmbeddingPipeline
-    embeddingPipeline = DataEmbeddingPipeline()
+    else:
+        pdf_directory = "G:\\Shridhar Projects\\Test PDFs"
+        pdf_documents = Load_pdf_documents(pdf_directory)
+        #print(pdf_documents)
 
-    # Prepare Data Chunks
-    dataChunks = embeddingPipeline.chunk_documents(pdf_documents)
-    #print("\n\n", dataChunks)
+        for doc in pdf_documents:
+            print("Metadata:", doc.metadata)
+            print("Text attributes:", doc.page_content[:200])
 
-    # Create embeddings for the data chunks
-    dataEmbeddings = embeddingPipeline.create_embeddings(dataChunks)
-    print("\n\n", dataEmbeddings)
+        # Initialize the DataEmbeddingPipeline
+        embeddingPipeline = DataEmbeddingPipeline()
 
+        # Prepare Data Chunks
+        dataChunks = embeddingPipeline.chunk_documents(pdf_documents)
+        #print("\n\n", dataChunks)
 
+        # Create embeddings for the data chunks
+        dataEmbeddings = embeddingPipeline.create_embeddings(dataChunks)
+        #print("\n\n", dataEmbeddings)
+
+        vectorDBStore = ChromaDBVectorStore()
+        vectorDBStore.storeEmbeddingsInVectorDB(pdf_documents, dataChunks, dataEmbeddings)
+
+    querySearch = QuerySearch()
+    userQuery = "What are JLR Feb-2018 wholesales?"
+    
+    search_results = querySearch.searchVectorDBUsingQuery(userQuery)
+    augmented_query = querySearch.augmentUserQueryWithSearchResults(userQuery, search_results)
+
+    querySearch.getQueryResponsefromLLM(userQuery, augmented_query)
