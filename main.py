@@ -33,11 +33,12 @@ if __name__ == "__main__":
         dataEmbeddings = embeddingPipeline.create_embeddings(dataChunks)
         #print("\n\n", dataEmbeddings)
 
+        # Store the embeddings in the vector database
         vectorDBStore = ChromaDBVectorStore()
         vectorDBStore.storeEmbeddingsInVectorDB(pdf_documents, dataChunks, dataEmbeddings)
 
     querySearch = QuerySearch()
-    userQuery = "What are JLR Feb-2018 wholesales?"
+    userQuery = "What are JLR February 2018 wholesale numbers?"
     
     search_results = querySearch.searchVectorDBUsingQuery(userQuery)
     augmented_query = querySearch.augmentUserQueryWithSearchResults(userQuery, search_results)
